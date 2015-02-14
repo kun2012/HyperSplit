@@ -27,7 +27,7 @@
 #define FALSE		0
 
 /* locate rule files */
-#define RULEPATH "./rules/"
+//#define RULEPATH "./rules/"
 
 /* for bitmap */
 #define MAXFILTERS	65536 /* support 64K rules */	
