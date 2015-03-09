@@ -529,11 +529,13 @@ int BuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, unsigned int depth)
     free(tempRuleNumList);
 
     BuildHSTree(childRuleSet, currNode->child[0], depth+1);
+
 #ifndef LOOKUP
     free(currNode->child[0]);
+#endif
+    //Modified by kun, should clear memory no matter LOOKUP or not
     free(childRuleSet->ruleList);
     free(childRuleSet);
-#endif
 
     /*Generate right child rule list*/
     currNode->child[1] = (hs_node_t *) malloc(sizeof(hs_node_t));
@@ -561,11 +563,14 @@ int BuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, unsigned int depth)
 
     free(tempRuleNumList);
     BuildHSTree(childRuleSet, currNode->child[1], depth+1);
+
+
 #ifndef LOOKUP
     free(currNode->child[1]);
+#endif
+    //Modified by kun, should clear memory no matter LOOKUP or not
     free(childRuleSet->ruleList);
     free(childRuleSet);
-#endif
 
     return  SUCCESS;
 }
@@ -625,6 +630,8 @@ int LookupHSTree(rule_set_t* ruleset, hs_node_t* root)
  *  Description:  yes, this is where we start.
  * =====================================================================================
  */
+unsigned int pt[MAX_TRACES][5];
+
 int main(int argc, char* argv[])
 {
     rule_set_t      ruleset;
@@ -672,19 +679,23 @@ int main(int argc, char* argv[])
     fpt = fopen(argv[2], "r");
     struct flow *flows = read_trace_file(fpt);
     int error_cnt = 0;
-    unsigned long long pt[DIM];
     long elapsedTimeMicroSec;
+
+    for (int i = 0; i < trace_rule_num; i++) {
+        pt[i][0] = flows[i].src_ip;
+        pt[i][1] = flows[i].dst_ip;
+        pt[i][2] = flows[i].src_port;
+        pt[i][3] = flows[i].dst_port;
+        pt[i][4] = flows[i].proto;
+    }
+
+    hs_node_t*  node;
+
     gettimeofday(&gStartTime, NULL);
     for (int i = 0; i < trace_rule_num; i++) {
-        pt[0] = flows[i].src_ip;
-        pt[1] = flows[i].dst_ip;
-        pt[2] = flows[i].src_port;
-        pt[3] = flows[i].dst_port;
-        pt[4] = flows[i].proto;
-        hs_node_t*  node = &rootnode;
-
+        node = &rootnode;
         while (node->child[0] != NULL) {
-            if (pt[node->d2s] <= node->thresh){
+            if (pt[i][node->d2s] <= node->thresh){
                 node = node->child[0];
             }
             else{
@@ -695,7 +706,6 @@ int main(int argc, char* argv[])
             error_cnt++;
         }
     }
-
     gettimeofday(&gEndTime, NULL);
 
     elapsedTimeMicroSec = (gEndTime.tv_sec - gStartTime.tv_sec) * 1000000;
