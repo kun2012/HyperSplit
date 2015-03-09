@@ -480,12 +480,12 @@ int BuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, unsigned int depth)
     /*Update currNode*/
     /*Binary split along d2s*/
 
-
 #ifdef DEBUG
     /* split info */
     printf("\n>>d2s=%u; thresh=0x%8x, range0=[%8x, %8x], range1=[%8x, %8x]",
             d2s, thresh, range[0][0], range[0][1], range[1][0], range[1][1]);
 #endif /* DEBUG */
+
 
     if (range[1][0] > range[1][1]) {
         printf("\n>>maxDiffSegPts=%d  range[1][0]=%x  range[1][1]=%x",
@@ -643,18 +643,18 @@ int main(int argc, char* argv[])
     ReadFilterFile(&ruleset, argv[1]);
     /* build hyper-split tree */
 
-#ifndef KUN_SPEED_TEST
+#ifndef LOOKUP
     printf("\n\n>>Building HyperSplit tree (%u rules, 5-tuple)", ruleset.num);
 #endif
 
     BuildHSTree(&ruleset, &rootnode, 0);
 
-#ifdef  LOOKUP
-    LookupHSTree(&ruleset, &rootnode);
-#endif
+/*#ifdef  LOOKUP*/
+    /*LookupHSTree(&ruleset, &rootnode);*/
+/*#endif*/
     gettimeofday(&gEndTime,NULL);
 
-#ifndef KUN_SPEED_TEST
+#ifndef LOOKUP
     printf("\n\n>>RESULTS:");
     printf("\n>>number of children:     %d", gChildCount);
     printf("\n>>worst case tree depth:  %d", gWstDepth);
@@ -667,17 +667,14 @@ int main(int argc, char* argv[])
     printf("\n\n>>SUCCESS in building HyperSplit tree :-)\n\n");
 #endif
 
+#ifdef LOOKUP
     //Speed test, added by kun
     fpt = fopen(argv[2], "r");
     struct flow *flows = read_trace_file(fpt);
     int error_cnt = 0;
     unsigned long long pt[DIM];
-
     long elapsedTimeMicroSec;
-
     gettimeofday(&gStartTime, NULL);
-
-    printf("trace number = %d\n", trace_rule_num);
     for (int i = 0; i < trace_rule_num; i++) {
         pt[0] = flows[i].src_ip;
         pt[1] = flows[i].dst_ip;
@@ -687,23 +684,24 @@ int main(int argc, char* argv[])
         hs_node_t*  node = &rootnode;
 
         while (node->child[0] != NULL) {
-            printf("node->thresh = %u\n", node->thresh);
-            printf("node->d2s = %d\n", node->d2s);
-            if (pt[node->d2s] <= node->thresh)
+            if (pt[node->d2s] <= node->thresh){
                 node = node->child[0];
-            else
+            }
+            else{
                 node = node->child[1];
+            }
         }
         if (node->thresh != flows[i].trueRID - 1) {
             error_cnt++;
         }
     }
+
     gettimeofday(&gEndTime, NULL);
-    return 0;
 
     elapsedTimeMicroSec = (gEndTime.tv_sec - gStartTime.tv_sec) * 1000000;
     elapsedTimeMicroSec += (gEndTime.tv_usec - gStartTime.tv_usec);
     printf("Query per second: %.2fMqps\n", (double)trace_rule_num / (double)elapsedTimeMicroSec);
+#endif
     return SUCCESS;
 }
 #endif   /* ----- #ifndef _HS_C ----- */

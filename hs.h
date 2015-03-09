@@ -16,9 +16,7 @@
  *  constant
  *-----------------------------------------------------------------------------*/
 
-#define KUN_SPEED_TEST
 #define MAX_TRACES 100000
-
 //Data structure and function for trace reading, added by kun
 struct flow {
     unsigned int src_ip;
@@ -30,7 +28,7 @@ struct flow {
 };
 
 //#define   DEBUG
-//#define   LOOKUP
+#define   LOOKUP
 
 /* for 5-tuple classification */
 #define DIM         5
