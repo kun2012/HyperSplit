@@ -468,8 +468,10 @@ int BuildHSTree (rule_set_t* ruleset, hs_node_t* currNode, unsigned int depth)
 
         gChildCount ++;
         gNumLeafNode ++;
+#ifndef LOOKUP
         if (gNumLeafNode % 1000000 == 0)
             printf(".");
+#endif
             /*printf("\n>>#%8dM leaf-node generated", gNumLeafNode/1000000);*/
         if (gWstDepth < depth)
             gWstDepth = depth;
@@ -710,7 +712,10 @@ int main(int argc, char* argv[])
 
     elapsedTimeMicroSec = (gEndTime.tv_sec - gStartTime.tv_sec) * 1000000;
     elapsedTimeMicroSec += (gEndTime.tv_usec - gStartTime.tv_usec);
-    printf("Query per second: %.2fMqps\n", (double)trace_rule_num / (double)elapsedTimeMicroSec);
+    unsigned long long total_memory = gNumTreeNode*8 + gNumLeafNode*4;
+    unsigned long long total_memory_in_kb = total_memory / 1024 + (total_memory % 1024 == 0? 0: 1);
+    printf("%lldKB\t", total_memory_in_kb);
+    printf("%.4lfMqps\n", (double)trace_rule_num / (double)elapsedTimeMicroSec);
 #endif
     return SUCCESS;
 }
